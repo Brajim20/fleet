@@ -2333,7 +2333,11 @@ type Datastore interface {
 	// assigned to any team).
 	GetMDMAndroidProfilesSummary(ctx context.Context, teamID *uint) (*MDMProfilesSummary, error)
 
+	// GetCertificateTemplatesSummary returns a summary of the current state of certificate templates on each host in
+	//the specified team (or, if no team is specified, each host that is not assigned to any team).
 	GetCertificateTemplatesSummary(ctx context.Context, teamID *uint) (*MDMProfilesSummary, error)
+
+	GetCertificateTemplates(ctx context.Context, hostID uint) ([]CertificateTemplate, error)
 
 	// GetHostMDMAndroidProfiles retrieves the Android MDM profiles for a specific host.
 	GetHostMDMAndroidProfiles(ctx context.Context, hostUUID string) ([]HostMDMAndroidProfile, error)

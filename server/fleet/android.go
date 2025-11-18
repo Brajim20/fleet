@@ -133,6 +133,24 @@ func (p HostMDMAndroidProfile) ToHostMDMProfile() HostMDMProfile {
 	}
 }
 
+type CertificateTemplate struct {
+	Name   string             `db:"name" json:"-"`
+	Status *MDMDeliveryStatus `db:"status" json:"-"`
+	Detail string             `db:"detail" json:"-"`
+}
+
+func (p *CertificateTemplate) ToHostMDMProfile() HostMDMProfile {
+	if p == nil {
+		return HostMDMProfile{}
+	}
+	return HostMDMProfile{
+		Name:     p.Name,
+		Status:   p.Status,
+		Detail:   p.Detail,
+		Platform: "android",
+	}
+}
+
 type AndroidPolicyRequestPayload struct {
 	Policy   *androidmanagement.Policy           `json:"policy"`
 	Metadata AndroidPolicyRequestPayloadMetadata `json:"metadata"`

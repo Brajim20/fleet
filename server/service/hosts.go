@@ -1363,6 +1363,18 @@ func (svc *Service) getHostDetails(ctx context.Context, host *fleet.Host, opts f
 				profiles = append(profiles, p.ToHostMDMProfile())
 			}
 
+			cts, err := svc.ds.GetCertificateTemplates(ctx, host.ID)
+			if err != nil {
+				return nil, ctxerr.Wrap(ctx, err, "get host certificate templates")
+			}
+			if cts != nil {
+				for _, ct := range cts {
+					profile := ct.ToHostMDMProfile()
+					profile.HostUUID = host.UUID
+					profiles = append(profiles, profile)
+				}
+			}
+
 		case "darwin", "ios", "ipados":
 			if ac.MDM.EnabledAndConfigured {
 				profs, err := svc.ds.GetHostMDMAppleProfiles(ctx, host.UUID)

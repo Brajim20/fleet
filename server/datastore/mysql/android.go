@@ -616,6 +616,21 @@ func (ds *Datastore) DeleteMDMAndroidConfigProfile(ctx context.Context, profileU
 	})
 }
 
+func (ds *Datastore) GetCertificateTemplates(ctx context.Context, hostID uint) ([]fleet.CertificateTemplate, error) {
+	stmt := `
+SELECT ct.name, cts.status. cts.detail 
+FROM certificate_template ct 
+	INNER JOIN certificate_template_status cts ON ct.id = cts.certificate_template_id 
+WHERE host_id = ?
+`
+
+	var cTemplates []fleet.CertificateTemplate
+	if err := sqlx.SelectContext(ctx, ds.reader(ctx), &cTemplates, stmt, hostID); err != nil {
+		return nil, err
+	}
+	return cTemplates, nil
+}
+
 func (ds *Datastore) GetCertificateTemplatesSummary(ctx context.Context, teamID *uint) (*fleet.MDMProfilesSummary, error) {
 	teamFilter := "team_id IS NULL"
 	if teamID != nil && *teamID > 0 {
