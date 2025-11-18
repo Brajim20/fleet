@@ -1032,7 +1032,12 @@ func (svc *Service) GetMDMAndroidProfilesSummary(ctx context.Context, teamID *ui
 		return nil, ctxerr.Wrap(ctx, err)
 	}
 
-	return ps, nil
+	cts, err := svc.ds.GetCertificateTemplatesSummary(ctx, teamID)
+	if err != nil {
+		return nil, ctxerr.Wrap(ctx, err)
+	}
+
+	return ps.Add(cts), nil
 }
 
 // authorizeAllHostsTeams is a helper function that loads the hosts

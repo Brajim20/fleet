@@ -616,6 +616,57 @@ func (ds *Datastore) DeleteMDMAndroidConfigProfile(ctx context.Context, profileU
 	})
 }
 
+func (ds *Datastore) GetCertificateTemplatesSummary(ctx context.Context, teamID *uint) (*fleet.MDMProfilesSummary, error) {
+	teamFilter := "team_id IS NULL"
+	if teamID != nil && *teamID > 0 {
+		teamFilter = fmt.Sprintf("team_id = %d", *teamID)
+	}
+
+	stmt := fmt.Sprintf(`
+SELECT 
+	status, 
+	COUNT(DISTINCT host_id) AS count
+FROM certificate_template_status cts
+WHERE %s
+GROUP BY 1
+HAVING status IS NOT NULL`, teamFilter)
+
+	var dest []struct {
+		Count  uint   `db:"count"`
+		Status string `db:"status"`
+	}
+
+	if err := sqlx.SelectContext(ctx, ds.reader(ctx), &dest, stmt); err != nil {
+		return nil, err
+	}
+
+	byStatus := make(map[string]uint)
+	for _, s := range dest {
+		if _, ok := byStatus[s.Status]; ok {
+			return nil, fmt.Errorf("duplicate status %s from android profiles summary", s.Status)
+		}
+		byStatus[s.Status] = s.Count
+	}
+
+	var res fleet.MDMProfilesSummary
+	for s, c := range byStatus {
+		switch fleet.MDMDeliveryStatus(s) {
+		case fleet.MDMDeliveryFailed:
+			res.Failed = c
+		case fleet.MDMDeliveryPending:
+			res.Pending = c
+		case fleet.MDMDeliveryVerifying:
+			res.Verifying = c
+		case fleet.MDMDeliveryVerified:
+			res.Verified = c
+		default:
+			return nil, fmt.Errorf("unknown status %s", s)
+		}
+	}
+
+	return &res, nil
+}
+
 func (ds *Datastore) GetMDMAndroidProfilesSummary(ctx context.Context, teamID *uint) (*fleet.MDMProfilesSummary, error) {
 	stmt := `
 SELECT
